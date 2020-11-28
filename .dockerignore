@@ -1,0 +1,16 @@
+.git
+.gitignore
+.env.example
+.mypy_cache/
+.venv/
+.vscode/
+__pycache__/
+README.md
+
+# OSX
+.DS_Store
+.Spotlight-V100
+.Trashes
+.AppleDB
+.AppleDesktop
+.apdisk
