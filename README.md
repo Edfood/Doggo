@@ -1,10 +1,10 @@
 # Doggo
 ゲームの長時間プレイを取り締まるためのDiscord Botです。
 
-下記のURLからBotをサーバーに招待できます。
-Botが落ちていても許してください。
 
-https://discord.com/api/oauth2/authorize?client_id=750754316326928495&permissions=1073925120&scope=bot
+一応公開しています: **[DiscordサーバにBotを招待](https://discord.com/api/oauth2/authorize?client_id=750754316326928495&permissions=1073925120&scope=bot)**
+
+Botが落ちていたらごめんなさい。
 
 ---------------------------------------
 # 使い方
