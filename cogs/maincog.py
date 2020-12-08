@@ -43,13 +43,13 @@ class MainCog(commands.Cog):
         """Show playtime graph"""
         user_id = str(ctx.author.id)
         ios = self._create_playtime_graph(user_id, MainCog.DAYS)
-        filename = ctx.author.name + '\'s stats.png'
+        filename = ctx.author.name + '\'s_stats.png'
         file = discord.File(fp=ios, filename=filename)
         await ctx.send(file=file)
     
 
     @staticmethod
-    def _create_playtime_graph(user_id, days):
+    def _get_playtime_graph_and_average_time(user_id, days):
         """return binary stream for a playtime graph."""
 
         # Get playtimes to make a graph from DB
@@ -62,8 +62,9 @@ class MainCog(commands.Cog):
 
         jst_today = datetime.now(JST).date()
 
-        # e.g. x = [11-29, ..., 12-06, 12-07, 12-08]
+        # x: date   e.g. x = [11-29, ..., 12-06, 12-07, 12-08]
         x = pd.date_range(end=jst_today, periods=days, freq='d')[::-1]
+        # y: playtime
         y = [0] * days
 
         for i, playtime in enumerate(playtimes):
@@ -71,20 +72,20 @@ class MainCog(commands.Cog):
             time = playtime.time_cnt * MainCog.INTERVAL / 60  # On an hourly basis
             if (jst_today - date).days < days:
                 y[i] = time
-        ave = sum(y) / days
+        average = sum(y) / days
 
 
-        def create_graph(x, y, ave):
+        def create_graph(x, y, average):
             fig = plt.figure()
             ax = fig.add_subplot(111)
             rects = ax.bar(x, y, color='darkturquoise', label='playtime')
             ax.set_xlabel('date')
             ax.set_ylabel('playtime[hour]')
             ax.set_ylim(bottom=0)
-            plt.axhline(y=ave, xmin=0, xmax=days, color='orange', label='average')
+            plt.axhline(y=average, xmin=0, xmax=days, color='orange', label='average')
             ax.legend()
 
-            # Display the value above bars.
+            # Display the playtime value above bars.
             for rect in rects:
                 height = rect.get_height()
                 ax.annotate(f'{height}', 
@@ -106,8 +107,8 @@ class MainCog(commands.Cog):
             ios.seek(0)
             return ios
 
-        ios = create_graph(x, y, ave)
-        return ios
+        ios = create_graph(x, y, average)
+        return ios, average
 
 
     @commands.command()
