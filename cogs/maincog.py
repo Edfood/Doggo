@@ -211,17 +211,15 @@ class MainCog(commands.Cog):
                 playtime = Playtime.get(id, jst_today)
                 print('id dayo : ' + str(id))
                 print(playtime)
-                if playtime is None and id in now_playing_user_ids:
-                    continue    # This is for reduce queries.
+                is_playing = id in now_playing_user_ids
                 if playtime is None:
                     playtime = Playtime(id, jst_today)
-                if id in now_playing_user_ids:
+                if is_playing:
                     playtime.time_cnt += MainCog.INTERVAL
+                    Playtime.merge(playtime)
 
                 print('this is the playtime !!!: ' + str(playtime))
                 
-                Playtime.merge(playtime)
-
             session.commit()
 
         except Exception:
