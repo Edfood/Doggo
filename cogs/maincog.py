@@ -8,13 +8,16 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import pandas as pd
 import sqlalchemy
-import datetime
+from datetime import datetime, timedelta, timezone
 import traceback
 
 from config import config
 from utils.log_conf import confLogger
 
 logger = confLogger(__name__)
+
+# generate timezone
+JST = timezone(timedelta(hours=+9), 'JST')
 
 
 class MainCog(commands.Cog):
@@ -54,13 +57,16 @@ class MainCog(commands.Cog):
         except Exception:
             logger.error(traceback.format_exc())
         
-        today = datetime.date.today()
-        x = pd.date_range(end=today, periods=days, freq='d')[::-1]
+        # today = datetime.date.today()
+
+        jst_today = datetime.now(JST).date()
+
+        x = pd.date_range(end=jst_today, periods=days, freq='d')[::-1]
         y = [0] * days
         for i, playtime in enumerate(playtimes):
             date = playtime.date
             time = playtime.time_cnt * MainCog.INTERVAL / 60  # On an hourly basis
-            if (today - date).days < days:
+            if (jst_today - date).days < days:
                 y[i] = time
         ave = sum(y) / days
 
@@ -194,18 +200,21 @@ class MainCog(commands.Cog):
                 print('hakken: ' + str(member.id))
                 now_playing_user_ids.add(str(member.id))
 
+        jst_today = datetime.now(JST).date()
+
         # Increase time_cnt of playtime in database.
         try:
             users = User.get_all()
 
             for user in users:
                 id = user.id
-                playtime = Playtime.get(id, datetime.date.today())
-
+                playtime = Playtime.get(id, jst_today)
+                print('id dayo : ' + str(id))
+                print(playtime)
                 if playtime is None and id in now_playing_user_ids:
                     continue    # This is for reduce queries.
                 if playtime is None:
-                    playtime = Playtime(id, datetime.date.today())
+                    playtime = Playtime(id, jst_today)
                 if id in now_playing_user_ids:
                     playtime.time_cnt += MainCog.INTERVAL
 

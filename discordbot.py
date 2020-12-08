@@ -32,7 +32,7 @@ class DiscordBot(commands.Bot):
 
 if __name__ == '__main__':
     logger.info('Creating database tables...')
-    Base.metadata.create_all(bind=ENGINE)
+    Base.metadata.create_all(bind=ENGINE)  # create DB tables if not exist
     logger.info('Done!')
 
     INTENTS = Intents.all()  # need for monitoring user status
