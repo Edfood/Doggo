@@ -19,12 +19,13 @@ logger = confLogger(__name__)
 # generate timezone
 JST = timezone(timedelta(hours=+9), 'JST')
 
+# Monitoring interval
+INTERVAL = float(config['TIME']['INTERVAL'])
+# default number of days to draw on the graph
+DAYS = int(config['TIME']['DAYS'])
+
 
 class MainCog(commands.Cog):
-    # Monitoring interval
-    INTERVAL = float(config['TIME']['INTERVAL'])
-    # default number of days to draw on the graph
-    DAYS = int(config['TIME']['DAYS'])
 
     def __init__(self, bot):
         self.bot = bot
@@ -51,7 +52,7 @@ class MainCog(commands.Cog):
     def _create_playtime_graph(user_id, days):
         """return binary stream for a playtime graph."""
 
-        # Get a data to make a graph from DB
+        # Get playtimes to make a graph from DB
         try:
             playtimes = Playtime.get_x_days(user_id, days)
         except Exception:
@@ -61,8 +62,10 @@ class MainCog(commands.Cog):
 
         jst_today = datetime.now(JST).date()
 
+        # e.g. x = [11-29, ..., 12-06, 12-07, 12-08]
         x = pd.date_range(end=jst_today, periods=days, freq='d')[::-1]
         y = [0] * days
+
         for i, playtime in enumerate(playtimes):
             date = playtime.date
             time = playtime.time_cnt * MainCog.INTERVAL / 60  # On an hourly basis
@@ -144,47 +147,45 @@ class MainCog(commands.Cog):
                    'You\'ll not be tracked from now on. :service_dog:'
             await MainCog.reply(ctx, text)
 
-    # @tasks.loop(seconds=30)
-    # async def crawl(self):
-    #     print('||||||||||||||||||||||||||||||||||||||||')
-    #     logger.info('Start crawling.')
+    @tasks.loop(seconds=INTERVAL)
+    async def crawl(self):
+        print('||||||||||||||||||||||||||||||||||||||||')
+        logger.info('Start crawling.')
         
-    #     # Get members info from discord.
-    #     now_playing_user_ids = set()   # IDs of users who are playing game.
-    #     for member in self.bot.get_all_members():
-    #         print('yap: ' + str(member.id) + ' : ' + str(member.name))
-    #         if (member.activity is not None and
-    #                 member.activity.type == discord.ActivityType.playing):
-    #             print('koko: ' + str(member.id))
-    #             now_playing_user_ids.add(str(member.id))
+        # Get members info from discord.
+        now_playing_user_ids = set()   # IDs of users who are playing game.
+        for member in self.bot.get_all_members():
+            if (member.activity is not None and
+                    member.activity.type == discord.ActivityType.playing):
+                print('hakken: ' + str(member.id))
+                now_playing_user_ids.add(str(member.id))
 
-    #     # Increase time_cnt of playtime in database.
-    #     try:
-    #         users = User.get_all()
+        jst_today = datetime.now(JST).date()
 
-    #         for user in users:
-    #             id = user.id
-    #             playtime = Playtime.get(id, datetime.date.today())
-    #             print('this is the playtime !!!: ' + str(playtime))
+        # Increase time_cnt of playtime in database.
+        try:
+            users = User.get_all()
 
-    #             if playtime is None and id in now_playing_user_ids:
-    #                 continue    # This is for reduce queries.
-    #             if playtime is None:
-    #                 playtime = Playtime(id, datetime.date.today())
-    #             if id in now_playing_user_ids:
-    #                 playtime.time_cnt += MainCog.INTERVAL
+            for user in users:
+                id = user.id
+                playtime = Playtime.get(id, jst_today)
+                is_playing = id in now_playing_user_ids
+                if playtime is None:
+                    playtime = Playtime(id, jst_today)
+                if is_playing:
+                    playtime.time_cnt += INTERVAL
+                    Playtime.merge(playtime)
 
+                print('this is the playtime !!!: ' + str(playtime))
                 
-    #             Playtime.merge(playtime)
+            session.commit()
 
-    #         session.commit()
-
-    #     except Exception:
-    #         session.rollback()
-    #         logger.error(traceback.format_exc())
-    #         logger.error('Failed in cralwling.')
-    #     else:
-    #         logger.info('Finish crawling.')
+        except Exception:
+            session.rollback()
+            logger.error(traceback.format_exc())
+            logger.error('Failed in cralwling.')
+        else:
+            logger.info('Finish crawling.')
     
     @commands.command()
     async def test(self, ctx):
@@ -215,7 +216,7 @@ class MainCog(commands.Cog):
                 if playtime is None:
                     playtime = Playtime(id, jst_today)
                 if is_playing:
-                    playtime.time_cnt += MainCog.INTERVAL
+                    playtime.time_cnt += INTERVAL
                     Playtime.merge(playtime)
 
                 print('this is the playtime !!!: ' + str(playtime))
