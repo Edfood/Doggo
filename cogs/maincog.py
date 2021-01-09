@@ -37,7 +37,6 @@ class MainCog(commands.Cog):
         message = f'{ctx.author.mention} {text}'
         await ctx.send(message)
     
-
     @commands.command()
     async def show(self, ctx):
         """Show playtime graph"""
@@ -47,7 +46,6 @@ class MainCog(commands.Cog):
         file = discord.File(fp=ios, filename=filename)
         await ctx.send(file=file)
     
-
     @staticmethod
     def _create_playtime_graph(user_id, days):
         """return binary stream for a playtime graph."""
@@ -58,8 +56,6 @@ class MainCog(commands.Cog):
         except Exception:
             logger.error(traceback.format_exc())
         
-        # today = datetime.date.today()
-
         jst_today = datetime.now(JST).date()
 
         # x: date   e.g. x = [11-29, ..., 12-06, 12-07, 12-08]
@@ -69,8 +65,8 @@ class MainCog(commands.Cog):
 
         for i, playtime in enumerate(playtimes):
             date = playtime.date
-            time = round(playtime.time_cnt * INTERVAL / 60, 1)  # On an hourly basis
-            if (jst_today - date).days < days:
+            time = round(playtime.time_cnt / 60, 1)  # On an hourly basis
+            if (jst_today - date).days < days: # 
                 y[i] = time
         average = sum(y) / days
 
@@ -87,7 +83,7 @@ class MainCog(commands.Cog):
 
             # Display the playtime value above bars.
             for rect in rects:
-                height = rect.get_height() - 0.01
+                height = rect.get_height()
                 ax.annotate(f'{height}', 
                             xy=(rect.get_x() + rect.get_width() / 2, height),
                             xytext=(0, 1),
