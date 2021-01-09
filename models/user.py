@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Integer
 from sqlalchemy.orm import relationship
 from models.setting import Base, session
 
@@ -6,13 +6,16 @@ from models.setting import Base, session
 class User(Base):
     __tablename__ = 'users'
     id = Column('id', String(50), unique=True, primary_key=True)
-    Playtimes = relationship('Playtime', backref='user', cascade='all,delete-orphan')
+    playtimes = relationship('playtime', backref='user', cascade='all,delete-orphan')
+    limit_time = Column('limitTime', Integer)
 
     def __repr__(self):
-        return f"<User(id='{self.id}')>"
+        return f"<User(id='{self.id}', playtime='{self.playtimes}', limit_time='{self.limit_time}')>"
 
     def __init__(self, id):
         self.id = id
+        INF = 1000000
+        self.limit_time = INF
 
     @classmethod
     def save(cls, obj):
