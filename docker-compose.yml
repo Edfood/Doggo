@@ -9,27 +9,6 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - ./db:/var/lib/postgresql/data
-    # - ./db/sql:/docker-entrypoint-initdb.d
-
-
-  # db:
-  #   image: mysql:5.7
-  #   command: --default-authentication-plugin=mysql_native_password
-  #   restart: always
-  #   environment:
-  #     - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-  #     - MYSQL_DATABASE=${MYSQL_DATABASE}
-  #     - MYSQL_USER=${MYSQL_USER}
-  #     - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-  #   # env_file: 
-  #   #   - .env
-  #   command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  #   volumes:
-  #     - ./db/data:/var/lib/mysql
-  #     - ./db/my.cnf:/etc/mysql/conf.d/my.cnf
-  #     # - ./db/sql:/docker-entrypoint-initdb.d
-
-  
   discordbot:
     build:
       context: .
