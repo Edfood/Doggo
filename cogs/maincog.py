@@ -29,7 +29,7 @@ class MainCog(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        # self.crawl.start()
+        self.crawl.start()
 
     @staticmethod
     async def reply(ctx, text):
@@ -57,7 +57,7 @@ class MainCog(commands.Cog):
             logger.error(traceback.format_exc())
         
         jst_today = datetime.now(JST).date()
-
+        print(playtimes)
         # x: date   e.g. x = [11-29, ..., 12-06, 12-07, 12-08]
         x = pd.date_range(end=jst_today, periods=days, freq='d')[::-1]
         # y: playtime
@@ -66,7 +66,7 @@ class MainCog(commands.Cog):
         for i, playtime in enumerate(playtimes):
             date = playtime.date
             time = round(playtime.time_cnt / 60, 1)  # On an hourly basis
-            if (jst_today - date).days < days: # 
+            if (jst_today - date).days < days:
                 y[i] = time
         average = sum(y) / days
 
@@ -81,7 +81,7 @@ class MainCog(commands.Cog):
             plt.axhline(y=average, xmin=0, xmax=days, color='orange', label='Average')
             ax.legend()
 
-            # Display the playtime value above bars.
+            # Display a playtime value above bars.
             for rect in rects:
                 height = rect.get_height()
                 ax.annotate(f'{height}', 
@@ -144,18 +144,19 @@ class MainCog(commands.Cog):
                    'You\'ll not be tracked from now on. :service_dog:'
             await MainCog.reply(ctx, text)
 
-    @tasks.loop(seconds=INTERVAL)
+    @tasks.loop(minutes=INTERVAL)
     async def crawl(self):
         print('||||||||||||||||||||||||||||||||||||||||')
         logger.info('Start crawling.')
         
+        now_playing_user_dict = {}   # key: user ID, value: member(user)
+
         # Get members info from discord.
-        now_playing_user_ids = set()   # IDs of users who are playing game.
         for member in self.bot.get_all_members():
             if (member.activity is not None and
                     member.activity.type == discord.ActivityType.playing):
-                print('hakken: ' + str(member.id))
-                now_playing_user_ids.add(str(member.id))
+                id = str(member.id)
+                now_playing_user_dict[id] = member
 
         jst_today = datetime.now(JST).date()
 
@@ -166,15 +167,18 @@ class MainCog(commands.Cog):
             for user in users:
                 id = user.id
                 playtime = Playtime.get(id, jst_today)
-                is_playing = id in now_playing_user_ids
                 if playtime is None:
                     playtime = Playtime(id, jst_today)
+                is_playing = id in now_playing_user_dict
                 if is_playing:
                     playtime.time_cnt += INTERVAL
                     Playtime.merge(playtime)
 
-                print('this is the playtime !!!: ' + str(playtime))
-                
+                # check if time limit exceeded
+                if playtime.time_cnt > user.limit_time:
+                    user = now_playing_user_dict[id]
+                    user.send('time is up! Stop playing video games.')
+
             session.commit()
 
         except Exception:
@@ -183,20 +187,21 @@ class MainCog(commands.Cog):
             logger.error('Failed in cralwling.')
         else:
             logger.info('Finish crawling.')
-    
+
+
     @commands.command()
     async def test(self, ctx):
-        
         print('||||||||||||||||||||||||||||||||||||||||')
         logger.info('Start crawling.')
         
+        now_playing_user_dict = {}   # key: user ID, value: member(user)
+
         # Get members info from discord.
-        now_playing_user_ids = set()   # IDs of users who are playing game.
         for member in self.bot.get_all_members():
             if (member.activity is not None and
                     member.activity.type == discord.ActivityType.playing):
-                print('hakken: ' + str(member.id))
-                now_playing_user_ids.add(str(member.id))
+                id = str(member.id)
+                now_playing_user_dict[id] = member
 
         jst_today = datetime.now(JST).date()
 
@@ -207,17 +212,18 @@ class MainCog(commands.Cog):
             for user in users:
                 id = user.id
                 playtime = Playtime.get(id, jst_today)
-                print('id dayo : ' + str(id))
-                print(playtime)
-                is_playing = id in now_playing_user_ids
                 if playtime is None:
                     playtime = Playtime(id, jst_today)
+                is_playing = id in now_playing_user_dict
                 if is_playing:
                     playtime.time_cnt += INTERVAL
                     Playtime.merge(playtime)
 
-                print('this is the playtime !!!: ' + str(playtime))
-                
+                # check if time limit exceeded
+                if playtime.time_cnt > user.limit_time:
+                    user = now_playing_user_dict[id]
+                    user.send('time is up! Stop playing video games.')
+
             session.commit()
 
         except Exception:
@@ -227,6 +233,18 @@ class MainCog(commands.Cog):
         else:
             logger.info('Finish crawling.')
 
+    
+    # @commands.command(name='set')
+    # async def setAlarm(self, ctx):
+    
+    # @commands.command(name='del')
+    # async def deleteAlarm(self, ctx):
+
+    # @commands.command(name='ca')
+    # async def showAlarm(self, ctx):
+
+    
+    
 
 def setup(bot):
     bot.add_cog(MainCog(bot))
