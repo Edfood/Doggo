@@ -1,6 +1,6 @@
 from discord import Intents
 from discord.ext import commands  # Bot Commands Framework
-from models.setting import Base, ENGINE
+import models.setting
 import traceback
 
 from config import config
@@ -31,9 +31,6 @@ class DiscordBot(commands.Bot):
 
 
 if __name__ == '__main__':
-    logger.info('Creating database tables...')
-    Base.metadata.create_all(bind=ENGINE)  # create DB tables if not exist
-    logger.info('Done!')
 
     INTENTS = Intents.all()  # need for monitoring user status
     COMMAND_PREFIX = config['DISCORD']['COMMAND_PREFIX']
