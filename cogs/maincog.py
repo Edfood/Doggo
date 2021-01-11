@@ -29,7 +29,7 @@ class MainCog(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.crawl.start()
+        self.monitor.start()
 
     @staticmethod
     async def reply(ctx, text):
@@ -38,8 +38,8 @@ class MainCog(commands.Cog):
         await ctx.send(message)
     
     @commands.command()
-    async def show(self, ctx):
-        """Show playtime graph"""
+    async def graph(self, ctx):
+        """Show playtime graph."""
         user_id = str(ctx.author.id)
         ios = self._create_playtime_graph(user_id, DAYS)
         filename = ctx.author.name + '\'s_stats.png'
@@ -145,7 +145,7 @@ class MainCog(commands.Cog):
             await MainCog.reply(ctx, text)
 
     @tasks.loop(minutes=INTERVAL)
-    async def crawl(self):
+    async def monitor(self):
         print('||||||||||||||||||||||||||||||||||||||||')
         logger.info('Start crawling.')
         
@@ -187,7 +187,7 @@ class MainCog(commands.Cog):
         else:
             logger.info('Finish crawling.')
 
-    @crawl.before_loop
+    @monitor.before_loop
     async def before_crawl(self):
         await self.bot.wait_until_ready()
 
