@@ -39,7 +39,7 @@ class MainCog(commands.Cog):
     
     @commands.command()
     async def graph(self, ctx):
-        """Show playtime graph."""
+        """Show a graph of playtime."""
         user_id = str(ctx.author.id)
         ios = self._create_playtime_graph(user_id, DAYS)
         filename = ctx.author.name + '\'s_stats.png'
@@ -234,13 +234,15 @@ class MainCog(commands.Cog):
         else:
             logger.info('Finish crawling.')
 
-    @commands.command(name='set')
+    @commands.command(name='seta')
     async def set_alert(self, ctx, limit_time: float):
+        """ Set a daily playtime limit. """
         id = str(ctx.author.id)
         await self._update_limit_time(ctx, id, limit_time)
 
-    @commands.command(name='del')
-    async def delete_alert(self, ctx):
+    @commands.command(name='reseta')
+    async def reset_alert(self, ctx):
+        """ Reset playtime limit. """
         id = str(ctx.author.id)
         INF = 1000000
         await self._update_limit_time(ctx, id, INF)
@@ -259,8 +261,9 @@ class MainCog(commands.Cog):
             text = 'Alert has been deleted.'
             await MainCog.reply(ctx, text)
         
-    @commands.command(name='reset')
-    async def reset_alert(self, ctx):
+    @commands.command(name='showa')
+    async def show_alert(self, ctx):
+        """ Show playtime limit. """
         try:
             id = str(ctx.author.id)
             user = User.get(id)
