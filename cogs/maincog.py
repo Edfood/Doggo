@@ -187,6 +187,9 @@ class MainCog(commands.Cog):
         else:
             logger.info('Finish crawling.')
 
+    @crawl.before_loop
+    async def before_crawl(self):
+        await self.bot.wait_until_ready()
 
     @commands.command()
     async def test(self, ctx):
