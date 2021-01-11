@@ -22,6 +22,13 @@ class User(Base):
         session.add(obj)
     
     @classmethod
+    def get(cls, id):
+        obj = session.query(User)\
+            .filter_by(id=id)\
+            .first()
+        return obj
+    
+    @classmethod
     def get_all(cls):
         return session.query(cls).all()
 
