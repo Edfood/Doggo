@@ -234,8 +234,23 @@ class MainCog(commands.Cog):
             logger.info('Finish crawling.')
 
     
-    # @commands.command(name='set')
-    # async def setAlarm(self, ctx):
+    @commands.command(name='set')
+    async def set_Alert(self, ctx, limit_time: float):
+        id = str(ctx.author.id)
+        try:
+            user = User.get(id)
+            user.limit_time = limit_time
+            session.commit()
+        except sqlalchemy.orm.exc.UnmappedInstanceError:
+            await MainCog.reply(ctx, 'BOW-WOW! You have not registered.')
+        except Exception:
+            logger.error(traceback.format_exc())
+            await MainCog.reply(ctx, 'BOW-WOW! Error occurred.')
+        else:
+            text = 'Alert has been set.\n'
+            await MainCog.reply(ctx, text)
+
+
     
     # @commands.command(name='del')
     # async def deleteAlarm(self, ctx):
