@@ -234,20 +234,17 @@ class MainCog(commands.Cog):
         else:
             logger.info('Finish crawling.')
 
-    
     @commands.command(name='set')
     async def set_Alert(self, ctx, limit_time: float):
         id = str(ctx.author.id)
         await self._update_limit_time(ctx, id, limit_time)
 
-    
     @commands.command(name='del')
     async def delete_alart(self, ctx):
         id = str(ctx.author.id)
         INF = 1000000
         await self._update_limit_time(ctx, id, INF)
     
-
     async def _update_limit_time(self, ctx, id: str, limit_time: float):
         try:
             user = User.get(id)
@@ -262,8 +259,22 @@ class MainCog(commands.Cog):
             text = 'Alert has been deleted.'
             await MainCog.reply(ctx, text)
         
-    # @commands.command(name='ca')
-    # async def showAlarm(self, ctx):
+    @commands.command(name='as')
+    async def show_alert(self, ctx):
+        try:
+            id = str(ctx.author.id)
+            user = User.get(id)
+        except sqlalchemy.orm.exc.UnmappedInstanceError:
+            await MainCog.reply(ctx, 'BOW-WOW! You have not registered.')
+        except Exception:
+            logger.error(traceback.format_exc())
+            await MainCog.reply(ctx, 'BOW-WOW! Error occurred.')
+        else:
+            limit_time = user.limit_time
+            text = f'Limit playtime: {limit_time} minutes'
+            await MainCog.reply(ctx, text)
+
+
 
 
 def setup(bot):
