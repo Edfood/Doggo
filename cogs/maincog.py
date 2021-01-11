@@ -238,6 +238,17 @@ class MainCog(commands.Cog):
     @commands.command(name='set')
     async def set_Alert(self, ctx, limit_time: float):
         id = str(ctx.author.id)
+        await self._update_limit_time(ctx, id, limit_time)
+
+    
+    @commands.command(name='del')
+    async def delete_alart(self, ctx):
+        id = str(ctx.author.id)
+        INF = 1000000
+        await self._update_limit_time(ctx, id, INF)
+    
+
+    async def _update_limit_time(self, ctx, id: str, limit_time: float):
         try:
             user = User.get(id)
             user.limit_time = limit_time
@@ -248,19 +259,12 @@ class MainCog(commands.Cog):
             logger.error(traceback.format_exc())
             await MainCog.reply(ctx, 'BOW-WOW! Error occurred.')
         else:
-            text = 'Alert has been set.\n'
+            text = 'Alert has been deleted.'
             await MainCog.reply(ctx, text)
-
-
-    
-    # @commands.command(name='del')
-    # async def deleteAlarm(self, ctx):
-
+        
     # @commands.command(name='ca')
     # async def showAlarm(self, ctx):
 
-    
-    
 
 def setup(bot):
     bot.add_cog(MainCog(bot))
