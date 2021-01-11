@@ -36,6 +36,44 @@ class MainCog(commands.Cog):
         """Reply to user in discord."""
         message = f'{ctx.author.mention} {text}'
         await ctx.send(message)
+
+    
+    @commands.command()
+    async def register(self, ctx):
+        """Register a user in database."""
+        user_id = str(ctx.author.id)
+        print('registered id: ' + str(user_id))
+        user = User(user_id)
+
+        try:
+            User.save(user)
+            session.commit()
+        except sqlalchemy.exc.IntegrityError:
+            session.rollback()
+            await MainCog.reply(ctx, 'BOW-WOW! You are already registered.')
+        except Exception:
+            logger.error(traceback.format_exc())
+            await MainCog.reply(ctx, 'BOW-WOW! Error occurred.')
+        else:
+            await MainCog.reply(ctx, 'You has been registered. :guide_dog:')
+
+
+    @commands.command(name='delete_me')
+    async def delete(self, ctx):
+        """Delete a registered user from DB."""
+        user_id = str(ctx.author.id)
+        try:
+            User.delete(user_id)
+            session.commit()
+        except sqlalchemy.orm.exc.UnmappedInstanceError:
+            await MainCog.reply(ctx, 'BOW-WOW! You have not registered.')
+        except Exception:
+            logger.error(traceback.format_exc())
+            await MainCog.reply(ctx, 'BOW-WOW! Error occurred.')
+        else:
+            text = 'You\'ve deleted from database.\n'\
+                   'You\'ll not be tracked from now on. :service_dog:'
+            await MainCog.reply(ctx, text)
     
     @commands.command()
     async def graph(self, ctx):
@@ -106,33 +144,39 @@ class MainCog(commands.Cog):
         ios = create_graph(x, y, average)
         return ios
 
+    @commands.command(name='seta')
+    async def set_alert(self, ctx, limit_time: float):
+        """ Set a daily playtime limit. """
+        id = str(ctx.author.id)
+        await self._update_limit_time(ctx, id, limit_time)
 
-    @commands.command()
-    async def register(self, ctx):
-        """Register a user in database."""
-        user_id = str(ctx.author.id)
-        print('registered id: ' + str(user_id))
-        user = User(user_id)
-
+    @commands.command(name='showa')
+    async def show_alert(self, ctx):
+        """ Show playtime limit. """
         try:
-            User.save(user)
-            session.commit()
-        except sqlalchemy.exc.IntegrityError:
-            session.rollback()
-            await MainCog.reply(ctx, 'BOW-WOW! You are already registered.')
+            id = str(ctx.author.id)
+            user = User.get(id)
+        except sqlalchemy.orm.exc.UnmappedInstanceError:
+            await MainCog.reply(ctx, 'BOW-WOW! You have not registered.')
         except Exception:
             logger.error(traceback.format_exc())
             await MainCog.reply(ctx, 'BOW-WOW! Error occurred.')
         else:
-            await MainCog.reply(ctx, 'You has been registered. :guide_dog:')
-
-
-    @commands.command(name='delete_me')
-    async def delete(self, ctx):
-        """Delete a registered user from DB."""
-        user_id = str(ctx.author.id)
+            limit_time = user.limit_time
+            text = f'Limit playtime: {limit_time} minutes'
+            await MainCog.reply(ctx, text)
+    
+    @commands.command(name='reseta')
+    async def reset_alert(self, ctx):
+        """ Reset playtime limit. """
+        id = str(ctx.author.id)
+        INF = 1000000
+        await self._update_limit_time(ctx, id, INF)
+    
+    async def _update_limit_time(self, ctx, id: str, limit_time: float):
         try:
-            User.delete(user_id)
+            user = User.get(id)
+            user.limit_time = limit_time
             session.commit()
         except sqlalchemy.orm.exc.UnmappedInstanceError:
             await MainCog.reply(ctx, 'BOW-WOW! You have not registered.')
@@ -140,9 +184,10 @@ class MainCog(commands.Cog):
             logger.error(traceback.format_exc())
             await MainCog.reply(ctx, 'BOW-WOW! Error occurred.')
         else:
-            text = 'You\'ve deleted from database.\n'\
-                   'You\'ll not be tracked from now on. :service_dog:'
+            text = 'Alert has been deleted.'
             await MainCog.reply(ctx, text)
+        
+
 
     @tasks.loop(minutes=INTERVAL)
     async def monitor(self):
@@ -193,91 +238,9 @@ class MainCog(commands.Cog):
 
     @commands.command()
     async def test(self, ctx):
-        print('||||||||||||||||||||||||||||||||||||||||')
-        logger.info('Start crawling.')
-        
-        now_playing_user_dict = {}   # key: user ID, value: member(user)
-
-        # Get members info from discord.
-        for member in self.bot.get_all_members():
-            if (member.activity is not None and
-                    member.activity.type == discord.ActivityType.playing):
-                id = str(member.id)
-                now_playing_user_dict[id] = member
-
-        jst_today = datetime.now(JST).date()
-
-        # Increase time_cnt of playtime in database.
-        try:
-            users = User.get_all()
-
-            for user in users:
-                id = user.id
-                playtime = Playtime.get(id, jst_today)
-                if playtime is None:
-                    playtime = Playtime(id, jst_today)
-                is_playing = id in now_playing_user_dict
-                if is_playing:
-                    playtime.time_cnt += INTERVAL
-                    Playtime.merge(playtime)
-                    # check if time limit exceeded
-                    if playtime.time_cnt > user.limit_time:
-                        user = now_playing_user_dict[id]
-                        await user.send('time is up! Stop playing video games.')
-
-            session.commit()
-
-        except Exception:
-            session.rollback()
-            logger.error(traceback.format_exc())
-            logger.error('Failed in cralwling.')
-        else:
-            logger.info('Finish crawling.')
-
-    @commands.command(name='seta')
-    async def set_alert(self, ctx, limit_time: float):
-        """ Set a daily playtime limit. """
-        id = str(ctx.author.id)
-        await self._update_limit_time(ctx, id, limit_time)
-
-    @commands.command(name='reseta')
-    async def reset_alert(self, ctx):
-        """ Reset playtime limit. """
-        id = str(ctx.author.id)
-        INF = 1000000
-        await self._update_limit_time(ctx, id, INF)
-    
-    async def _update_limit_time(self, ctx, id: str, limit_time: float):
-        try:
-            user = User.get(id)
-            user.limit_time = limit_time
-            session.commit()
-        except sqlalchemy.orm.exc.UnmappedInstanceError:
-            await MainCog.reply(ctx, 'BOW-WOW! You have not registered.')
-        except Exception:
-            logger.error(traceback.format_exc())
-            await MainCog.reply(ctx, 'BOW-WOW! Error occurred.')
-        else:
-            text = 'Alert has been deleted.'
-            await MainCog.reply(ctx, text)
-        
-    @commands.command(name='showa')
-    async def show_alert(self, ctx):
-        """ Show playtime limit. """
-        try:
-            id = str(ctx.author.id)
-            user = User.get(id)
-        except sqlalchemy.orm.exc.UnmappedInstanceError:
-            await MainCog.reply(ctx, 'BOW-WOW! You have not registered.')
-        except Exception:
-            logger.error(traceback.format_exc())
-            await MainCog.reply(ctx, 'BOW-WOW! Error occurred.')
-        else:
-            limit_time = user.limit_time
-            text = f'Limit playtime: {limit_time} minutes'
-            await MainCog.reply(ctx, text)
-
-
+        """ test command. """
+        print('test restart.')
+        self.monitor.restart()
 
 
 def setup(bot):
