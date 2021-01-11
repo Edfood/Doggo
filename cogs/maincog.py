@@ -173,11 +173,10 @@ class MainCog(commands.Cog):
                 if is_playing:
                     playtime.time_cnt += INTERVAL
                     Playtime.merge(playtime)
-
-                # check if time limit exceeded
-                if playtime.time_cnt > user.limit_time:
-                    user = now_playing_user_dict[id]
-                    user.send('time is up! Stop playing video games.')
+                    # check if time limit exceeded
+                    if playtime.time_cnt > user.limit_time:
+                        user = now_playing_user_dict[id]
+                        await user.send('time is up! Stop playing video games.')
 
             session.commit()
 
@@ -218,11 +217,10 @@ class MainCog(commands.Cog):
                 if is_playing:
                     playtime.time_cnt += INTERVAL
                     Playtime.merge(playtime)
-
-                # check if time limit exceeded
-                if playtime.time_cnt > user.limit_time:
-                    user = now_playing_user_dict[id]
-                    user.send('time is up! Stop playing video games.')
+                    # check if time limit exceeded
+                    if playtime.time_cnt > user.limit_time:
+                        user = now_playing_user_dict[id]
+                        await user.send('time is up! Stop playing video games.')
 
             session.commit()
 
