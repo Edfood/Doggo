@@ -144,13 +144,13 @@ class MainCog(commands.Cog):
         ios = create_graph(x, y, average)
         return ios
 
-    @commands.command(name='seta')
+    @commands.command(name='set_alert')
     async def set_alert(self, ctx, limit_time: float):
         """ Set a daily playtime limit. """
         id = str(ctx.author.id)
         await self._update_limit_time(ctx, id, limit_time)
 
-    @commands.command(name='showa')
+    @commands.command(name='show_alert')
     async def show_alert(self, ctx):
         """ Show playtime limit. """
         try:
@@ -166,7 +166,7 @@ class MainCog(commands.Cog):
             text = f'Limit playtime: {limit_time} minutes'
             await MainCog.reply(ctx, text)
     
-    @commands.command(name='reseta')
+    @commands.command(name='reset_alert')
     async def reset_alert(self, ctx):
         """ Reset playtime limit. """
         id = str(ctx.author.id)
