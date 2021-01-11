@@ -235,7 +235,7 @@ class MainCog(commands.Cog):
             logger.info('Finish crawling.')
 
     @commands.command(name='set')
-    async def set_Alert(self, ctx, limit_time: float):
+    async def set_alert(self, ctx, limit_time: float):
         id = str(ctx.author.id)
         await self._update_limit_time(ctx, id, limit_time)
 
