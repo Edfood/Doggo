@@ -127,7 +127,7 @@ class MainCog(commands.Cog):
             await MainCog.reply(ctx, 'You has been registered. :guide_dog:')
 
 
-    @commands.command()
+    @commands.command(name='delete_me')
     async def delete(self, ctx):
         """Delete a registered user from DB."""
         user_id = str(ctx.author.id)
@@ -240,7 +240,7 @@ class MainCog(commands.Cog):
         await self._update_limit_time(ctx, id, limit_time)
 
     @commands.command(name='del')
-    async def delete_alart(self, ctx):
+    async def delete_alert(self, ctx):
         id = str(ctx.author.id)
         INF = 1000000
         await self._update_limit_time(ctx, id, INF)
@@ -259,8 +259,8 @@ class MainCog(commands.Cog):
             text = 'Alert has been deleted.'
             await MainCog.reply(ctx, text)
         
-    @commands.command(name='as')
-    async def show_alert(self, ctx):
+    @commands.command(name='reset')
+    async def reset_alert(self, ctx):
         try:
             id = str(ctx.author.id)
             user = User.get(id)
