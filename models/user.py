@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Integer
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, selectinload
 from models.setting import Base, session
 
 
@@ -7,7 +7,7 @@ class User(Base):
     __tablename__ = 'users'
     id = Column('id', String(50), unique=True, primary_key=True)
     limit_time = Column('limitTime', Integer, nullable=False)
-    playtimes = relationship('Playtime', backref='user', cascade='all,delete-orphan')
+    playtimes = relationship('Playtime', backref='user', cascade='all,delete-orphan', order_by='Playtime.date')
 
     def __repr__(self):
         return f"<User(id='{self.id}', playtime='{self.playtimes}', limit_time='{self.limit_time}')>"
@@ -30,7 +30,9 @@ class User(Base):
     
     @classmethod
     def get_all(cls):
-        return session.query(cls).all()
+        return session.query(cls) \
+            .options(selectinload(cls.playtimes)) \
+            .all()
 
     @classmethod
     def delete(cls, id):

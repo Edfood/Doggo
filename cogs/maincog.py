@@ -188,7 +188,6 @@ class MainCog(commands.Cog):
             await MainCog.reply(ctx, text)
         
 
-
     @tasks.loop(minutes=INTERVAL)
     async def monitor(self):
         print('||||||||||||||||||||||||||||||||||||||||')
@@ -208,21 +207,25 @@ class MainCog(commands.Cog):
         # Increase time_cnt of playtime in database.
         try:
             users = User.get_all()
-
+            new_today_playtimes = []
             for user in users:
                 id = user.id
-                playtime = Playtime.get(id, jst_today)
-                if playtime is None:
-                    playtime = Playtime(id, jst_today)
+                playtimes = user.playtimes
+                
                 is_playing = id in now_playing_user_dict
-                if is_playing:
-                    playtime.time_cnt += INTERVAL
-                    Playtime.merge(playtime)
-                    # check if time limit exceeded
-                    if playtime.time_cnt > user.limit_time:
+                time = INTERVAL if is_playing else 0
+                print('playtimes dayo: ')
+                print(playtimes)
+                if not playtimes or playtimes[-1].date != jst_today:
+                    new_today_playtimes.append(Playtime(id, jst_today, time))
+                else:
+                    today_playtime = playtimes[-1]
+                    today_playtime.time_cnt += time
+                    if today_playtime.time_cnt > user.limit_time and is_playing:
                         user = now_playing_user_dict[id]
                         await user.send('time is up! Stop playing video games.')
 
+            session.add_all(new_today_playtimes)
             session.commit()
 
         except Exception:
@@ -239,7 +242,7 @@ class MainCog(commands.Cog):
     @commands.command()
     async def test(self, ctx):
         """ test command. """
-        print('test restart.')
+        print('\ntest restart.')
         self.monitor.restart()
 
 
