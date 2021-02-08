@@ -24,6 +24,7 @@ INTERVAL = float(config['TIME']['INTERVAL'])
 # default number of days to draw on the graph
 DAYS = int(config['TIME']['DAYS'])
 
+INF = 1000000
 
 class MainCog(commands.Cog):
 
@@ -166,11 +167,12 @@ class MainCog(commands.Cog):
             text = f'Limit playtime: {limit_time} minutes'
             await MainCog.reply(ctx, text)
     
+    
     @commands.command(name='reset_alert')
     async def reset_alert(self, ctx):
         """ Reset playtime limit. """
         id = str(ctx.author.id)
-        INF = 1000000
+        
         await self._update_limit_time(ctx, id, INF)
     
     async def _update_limit_time(self, ctx, id: str, limit_time: float):
@@ -184,8 +186,10 @@ class MainCog(commands.Cog):
             logger.error(traceback.format_exc())
             await MainCog.reply(ctx, 'BOW-WOW! Error occurred.')
         else:
-            text = 'Alert has been deleted.'
-            await MainCog.reply(ctx, text)
+            if limit_time == INF:
+                await MainCog.reply(ctx, 'Alert has deleted.')
+            else:
+                await MainCog.reply(ctx, 'Alert has updated.')
         
 
     @tasks.loop(minutes=INTERVAL)
