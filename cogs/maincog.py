@@ -102,11 +102,11 @@ class MainCog(commands.Cog):
         # y: playtime
         y = [0] * days
 
-        for i, playtime in enumerate(playtimes):
-            date = playtime.date
+        for playtime in playtimes:
             time = round(playtime.time_cnt / 60, 1)  # On an hourly basis
-            if (jst_today - date).days < days:
-                y[i] = time
+            diff = (jst_today - playtime.date).days
+            if diff < days:
+                y[diff] = time
         average = sum(y) / days
 
 
