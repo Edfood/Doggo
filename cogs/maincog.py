@@ -146,7 +146,7 @@ class MainCog(commands.Cog):
         return ios
 
     @commands.command(name='set_alert')
-    async def set_alert(self, ctx, limit_time: float):
+    async def set_alert(self, ctx, limit_time: int):
         """ Set a daily playtime limit. """
         id = str(ctx.author.id)
         await self._update_limit_time(ctx, id, limit_time)
@@ -189,7 +189,7 @@ class MainCog(commands.Cog):
             if limit_time == INF:
                 await MainCog.reply(ctx, 'Alert has deleted.')
             else:
-                await MainCog.reply(ctx, 'Alert has updated.')
+                await MainCog.reply(ctx, f'Alert has updated: {limit_time} minutes')
         
 
     @tasks.loop(minutes=INTERVAL)
