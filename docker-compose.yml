@@ -10,6 +10,7 @@ services:
     volumes:
       - ./db/data:/var/lib/postgresql/data
       - ./db/log:/var/log
+    command: postgres -c shared_buffers=256MB
   discordbot:
     build:
       context: .
